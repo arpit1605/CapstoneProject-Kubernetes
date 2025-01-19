@@ -32,8 +32,8 @@ spec:
               name: backend-secrets
               key: JWT_SECRET
         - name: REDIS_HOST
-          value: "redis"
+          value: "redis-service.database.svc.cluster.local"
         - name: REDIS_PORT
           value: "6379"
         - name: KAFKA_BROKERS
-          value: "kafka:9092"
+          value: "kafka-service.utils.svc.cluster.local:9092"

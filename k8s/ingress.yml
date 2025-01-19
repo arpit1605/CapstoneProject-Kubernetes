@@ -10,21 +10,21 @@ spec:
   - host: localhost
     http:
       paths:
-      - path: /authservice
+      - path: /auth
         pathType: Prefix
         backend:
           service:
             name: authservice-service
             port:
               number: 5000
-      - path: /userservice
+      - path: /user
         pathType: Prefix
         backend:
           service:
             name: userservice-service
             port:
               number: 5001
-      - path: /companyservice
+      - path: /company
         pathType: Prefix
         backend:
           service:
