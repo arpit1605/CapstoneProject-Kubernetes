@@ -20,14 +20,20 @@ spec:
         - containerPort: 5000
         env:
         - name: MONGO_URI
-          value: "mongodb://mongodb-service.database.svc.cluster.local:27017/jobsapp"
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets 
+              key: MONGO_URI
         - name: PORT
           value: "5000"
         - name: JWT_SECRET
-          value: someshittyjwttokenisbeingused
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: JWT_SECRET
         - name: REDIS_HOST
-          value: "redis-service.database.svc.cluster.local"
+          value: "redis"
         - name: REDIS_PORT
           value: "6379"
         - name: KAFKA_BROKERS
-          value: "kafka-service.utils.svc.cluster.local:9092"
+          value: "kafka:9092"

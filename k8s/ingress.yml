@@ -1,0 +1,33 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backend-ingress
+  namespace: backend
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: localhost
+    http:
+      paths:
+      - path: /authservice
+        pathType: Prefix
+        backend:
+          service:
+            name: authservice-service
+            port:
+              number: 5000
+      - path: /userservice
+        pathType: Prefix
+        backend:
+          service:
+            name: userservice-service
+            port:
+              number: 5001
+      - path: /companyservice
+        pathType: Prefix
+        backend:
+          service:
+            name: companyservice-service
+            port:
+              number: 5002
