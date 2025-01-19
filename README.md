@@ -1,2 +1,2 @@
-# CapstonrProject-Kubernetes
-DevOps CI/CD Pipeline for MERN application using Kubernetes
+# CapstoneProject - JobsApp
+Deploy MERN application using Docker and Kubernetes
