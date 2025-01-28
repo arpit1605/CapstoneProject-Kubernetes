@@ -1,0 +1,136 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_REGISTRY = 'arpit1605'
+        APP_NAME = 'jobsapp'
+        TAG = "v1-${env.BUILD_NUMBER}"
+        K8S_DEPLOYMENT_DIR = 'k8s/backend'
+        K8S_DATABASE_DIR = 'k8s/database'
+        K8S_MONITORING_DIR = 'k8s/monitoring'
+        K8S_UTILS_DIR = 'k8s/utils'
+        K8S_NAMESPACE_FILE = 'k8s/namespace.yml'
+        K8S_INGRESS_FILE = 'k8s/ingress.yml'
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git url: 'https://github.com/arpit1605/CapstoneProject-Kubernetes.git', branch: 'main'
+            }
+        }
+        stage('Build Docker Images') {
+            steps {
+                script {
+                    sh 'docker-compose up --build'
+                }
+            }
+        }
+        stage('Tag and Push Docker Images') {
+            steps {
+                script {
+                    sh "docker tag jobsapp-authservice-backend:v1 ${IMAGE_REGISTRY}/${APP_NAME}-authservice:${TAG}"
+                    sh "docker tag jobsapp-userservice-backend:v1 ${IMAGE_REGISTRY}/${APP_NAME}-userservice:${TAG}"
+                    sh "docker tag jobsapp-companyservice-backend:v1 ${IMAGE_REGISTRY}/${APP_NAME}-companyservice:${TAG}"
+                    
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub_credentials') {
+                        sh "docker push ${IMAGE_REGISTRY}/${APP_NAME}-authservice:${TAG}"
+                        sh "docker push ${IMAGE_REGISTRY}/${APP_NAME}-userservice:${TAG}"
+                        sh "docker push ${IMAGE_REGISTRY}/${APP_NAME}-companyservice:${TAG}"
+                    }
+                }
+            }
+        }
+        stage('Deploy Namespace & Ingress') {
+            steps {
+                script {
+                    sh "kubectl apply -f ${K8S_NAMESPACE_FILE}"
+                    sh "kubectl apply -f ${K8S_INGRESS_FILE}"
+                }
+            }
+        }
+        stage('Deploy Database & Storage') {
+            steps {
+                script {
+                    sh "kubectl apply -f ${K8S_DATABASE_DIR}/mongodb-pv.yml"
+                    sh "kubectl apply -f ${K8S_DATABASE_DIR}/mongodb-pvc.yml"
+                    sh "kubectl apply -f ${K8S_DATABASE_DIR}/mongodb-deployment.yml"
+                    sh "kubectl apply -f ${K8S_DATABASE_DIR}/mongodb-service.yml"
+                    sh "kubectl apply -f ${K8S_DATABASE_DIR}/redis-deployment.yml"
+                    sh "kubectl apply -f ${K8S_DATABASE_DIR}/redis-service.yml"
+                }
+            }
+        }
+        stage('Apply Backend Secrets') {
+            steps {
+                script {
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/backend-secrets.yml"
+                }
+            }
+        }
+        stage('Deploy Backend Services') {
+            steps {
+                script {
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/authservice/deployment.yml"
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/authservice/service.yml"
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/userservice/deployment.yml"
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/userservice/service.yml"
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/companyservice/deployment.yml"
+                    sh "kubectl apply -f ${K8S_DEPLOYMENT_DIR}/companyservice/service.yml"
+                }
+            }
+        }
+        stage('Deploy Monitoring Tools') {
+            steps {
+                script {
+                    sh "kubectl apply -f ${K8S_MONITORING_DIR}/prometheus-config.yml"
+                    sh "kubectl apply -f ${K8S_MONITORING_DIR}/prometheus-deployment.yml"
+                    sh "kubectl apply -f ${K8S_MONITORING_DIR}/prometheus-service.yml"
+                    sh "kubectl apply -f ${K8S_MONITORING_DIR}/grafana-deployment.yml"
+                    sh "kubectl apply -f ${K8S_MONITORING_DIR}/grafana-service.yml"
+                }
+            }
+        }
+        stage('Deploy Kafka & Zookeeper') {
+            steps {
+                script {
+                    sh "kubectl apply -f ${K8S_UTILS_DIR}/zookeeper-deployment.yml"
+                    sh "kubectl apply -f ${K8S_UTILS_DIR}/zookeeper-service.yml"
+                    sh "kubectl apply -f ${K8S_UTILS_DIR}/kafka-deployment.yml"
+                    sh "kubectl apply -f ${K8S_UTILS_DIR}/kafka-service.yml"
+                }
+            }
+        }
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    sh 'kubectl get pods -A'
+                    sh 'kubectl get services -A'
+                    sh 'kubectl rollout status deployment/authservice -n backend'
+                    sh 'kubectl rollout status deployment/userservice -n backend'
+                    sh 'kubectl rollout status deployment/companyservice -n backend'
+                    sh 'kubectl rollout status deployment/kafka -n utils'
+                    sh 'kubectl rollout status deployment/zookeeper -n utils'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+        }
+        success {
+            echo 'Deployment successful!'
+        }
+        failure {
+            echo 'Deployment failed.'
+        }
+    }
+}
+

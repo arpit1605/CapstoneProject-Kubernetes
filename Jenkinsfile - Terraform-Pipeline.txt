@@ -1,0 +1,87 @@
+pipeline {
+    agent any
+
+    environment {
+        TERRAFORM_DIR = 'Terraform'
+        JENKINS_K8S_JOB = 'Kubernetes-Deployment-Pipeline'  // Jenkins Job Name for Kubernetes
+    }
+
+    triggers {
+        githubPush()
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git url: 'https://github.com/arpit1605/CapstoneProject-Terraform.git', branch: 'main'
+            }
+        }
+        stage('Initialize Terraform') {
+            steps {
+                dir("${TERRAFORM_DIR}") {
+                    withCredentials([[ 
+                        $class: 'AmazonWebServicesCredentialsBinding', 
+                        credentialsId: 'Arpit-AWS-ID'
+                    ]]) {
+                        sh 'terraform init'
+                    }
+                }
+            }
+        }
+        stage('Plan Terraform') {
+            steps {
+                dir("${TERRAFORM_DIR}") {
+                    withCredentials([[ 
+                        $class: 'AmazonWebServicesCredentialsBinding', 
+                        credentialsId: 'Arpit-AWS-ID'
+                    ]]) {
+                        sh 'terraform plan -out=tfplan'
+                    }
+                }
+            }
+        }
+        stage('Terraform Apply') {
+            steps {
+                dir("${TERRAFORM_DIR}") {
+                    withCredentials([[ 
+                        $class: 'AmazonWebServicesCredentialsBinding', 
+                        credentialsId: 'Arpit-AWS-ID'
+                    ]]) {
+                        sh 'terraform apply -auto-approve tfplan'
+                    }
+                }
+            }
+        }
+        stage('Trigger Kubernetes Deployment Pipeline') {
+            steps {
+                script {
+                    build job: "${JENKINS_K8S_JOB}", wait: true
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up workspace...'
+            cleanWs()
+        }
+        success {
+            echo 'Terraform changes applied successfully and Kubernetes deployment triggered!'
+        }
+        failure {
+            echo 'Terraform pipeline failed. Check logs for details.'
+            script {
+                dir("${TERRAFORM_DIR}") {
+                    withCredentials([[ 
+                        $class: 'AmazonWebServicesCredentialsBinding', 
+                        credentialsId: 'Arpit-AWS-ID'
+                    ]]) {
+                        sh 'terraform destroy -auto-approve'
+                    }    
+                }
+            }
+        }
+    }
+}
+
