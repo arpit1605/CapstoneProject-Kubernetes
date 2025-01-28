@@ -79,7 +79,7 @@ k8s
 │   ├── userservice        # User management microservice
 │   │   ├── deployment.yml # Deployment configuration for User Service
 │   │   ├── service.yml    # Service configuration for User Service
-│   │   ├── backend-secrets.yml # Secrets for backend services
+│   ├── backend-secrets.yml # Secrets for backend services
 ├── database
 │   ├── mongodb-deployment.yml # MongoDB database deployment
 │   ├── mongodb-pv.yml         # MongoDB Persistent Volume configuration
