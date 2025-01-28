@@ -221,6 +221,8 @@ Now, Jenkins will trigger the appropriate pipeline whenever a push event occurs 
 | Push to Terraform Repository | **Terraform Pipeline** | ✅ Provisions infrastructure<br>✅ Triggers Kubernetes Pipeline |
 | Push to Kubernetes Repository | **Kubernetes Deployment Pipeline** | ✅ Deploys latest app version |
 
+![JenkinsPipeline](https://github.com/user-attachments/assets/ec50374c-a6c8-442e-8be7-83c86e79baf2)
+
 ---
 
 ## **Terraform Pipeline Configuration**
