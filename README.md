@@ -1,4 +1,4 @@
-# Capstone Project: Terraform & Kubernetes Deployment
+![image](https://github.com/user-attachments/assets/a7fbec5d-c497-4171-937c-6ac8ab7cc810)# Capstone Project: Terraform & Kubernetes Deployment
 
 This document outlines the implementation details of a fully automated CI/CD pipeline using Jenkins, Terraform, and Kubernetes. It also provides details about the **JobsApp** project, which consists of three main services: Auth Service, User Service, and Company Service. These services manage user authentication, profile details, and company information.
 
@@ -19,7 +19,10 @@ The deployment repository is split into two parts:
 
 ## Architecture Diagram
 
-Below is a placeholder for the architecture diagram of the deployment:
+Below is the architecture diagram of the deployment:
+
+![image](https://github.com/user-attachments/assets/99d2ba68-70e8-44d8-8fd0-2371e3c620a2)
+
 
 The architecture includes:
 - **Terraform**: Provisions the cloud infrastructure.
